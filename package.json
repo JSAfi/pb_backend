@@ -1,0 +1,33 @@
+{
+  "name": "2021-fullstackopen",
+  "version": "0.0.1",
+  "description": "2021 full stack course Helsinki open university",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+	"build:ui": "rm -rf build && cd ../osa2/puhelinluettelo/ && npm run build --prod && cp -r build ./",
+    "deploy": "git push heroku main",
+    "deploy:full": "npm run build:ui && git add . && git commit -m uibuild && git push && npm run deploy",    
+    "logs:prod": "heroku logs --tail"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JSAfi/2021-fullstackopen.git"
+  },
+  "author": "Jaakko Salmela",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/JSAfi/2021-fullstackopen/issues"
+  },
+  "homepage": "https://github.com/JSAfi/2021-fullstackopen#readme",
+  "devDependencies": {
+    "nodemon": "^2.0.12"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "morgan": "^1.10.0"
+  }
+}
