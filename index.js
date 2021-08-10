@@ -88,7 +88,7 @@ app.get('/api/persons/:id', (request, response, next) => {
     )
 })
 
-app.delete('/api/persons/:id', (request, response) => {
+app.delete('/api/persons/:id', (request, response, error) => {
     Person.findByIdAndRemove(request.params.id)
         .then(result => {
             response.status(204).end()
@@ -96,16 +96,14 @@ app.delete('/api/persons/:id', (request, response) => {
         .catch(error => next(error))
 })
 
-const generateId = () => {
-    return Math.floor(Math.random() * 1000000)
-}
-
-app.post('/api/persons', (request, response) => {
+app.post('/api/persons', (request, response, next) => {
     const body = request.body
     console.log(body)
+
     if (body.name === undefined) {
-        return response.status(400).json({error: 'content missing'})
-    }
+        return response.status(400).json({ error: 'name missing' })
+      }
+    
     const person = new Person({
         name: body.name,
         number: body.number,
@@ -113,6 +111,25 @@ app.post('/api/persons', (request, response) => {
     person.save().then(savedPerson => {
         response.json(savedPerson)
     })
+    .catch(error => 
+        next(error)
+    )
+})
+
+app.put('/api/persons/:id', (request, response, next) => {
+    const body = request.body
+
+    const person = {
+        name: body.name,
+        number: body.number,
+    }
+    console.log(body)
+
+    Person.findByIdAndUpdate(request.params.id, person, {new: true})
+        .then(updatedPerson => {
+            response.json(updatedPerson)
+        })
+        .catch(error => next(error))
 })
 
 const unknownEndpoint = (request, response) => {
