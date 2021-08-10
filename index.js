@@ -1,47 +1,45 @@
-require('dotenv').config()
-const { json } = require('express')
 const express = require('express')
+const app = express()
+const cors = require('cors')
+require('dotenv').config()
 
 const morgan = require('morgan')
-const cors = require('cors')
 
 const Person = require('./models/person')
 
-const app = express()
-
-app.use(express.json())
 app.use(express.static('build'))
+app.use(cors())
+app.use(express.json())
+
+
+const requestLogger = (request, response, next) => {
+    console.log('Method:', request.method)
+    console.log('Path:  ', request.path)
+    console.log('Body:  ', request.body)
+    console.log('---')
+    next()
+  }
+
+app.use(requestLogger)
 
 morgan.token('body', function getBody(req){
     return JSON.stringify(req.body)
 })
 
 app.use(morgan(':method :url :status :res[content-length] :response-time ms :body'))
-app.use(cors())
 
 
-let persons = [
-    {
-        id: 1,
-        name: "Arto Hellas",
-        number: "040-123456"
-    },
-    {
-        id: 2,
-        name: "Ada Lovelace",
-        number: "39-44-5323523"
-    },
-    {
-        id: 3, 
-        name: "Dan Abramov",
-        number: "12-43-2345345"
-    },
-    {
-        id: 4,
-        name: "Mary Poppendick",
-        number: "39-23-6423122"
+const errorHandler = (error, request, response, next) => {
+    console.log('nyt errorHandlerissa!')
+    console.error(error.message)
+    
+    if(error.name === 'CastError') {
+        console.log('joo, castError tuli')
+        return response.status(400).send({error: 'malformatted id'})
     }
-]
+
+    next(error)
+}
 
 app.get('/', (request, response) => {
     const date = new Date()
@@ -68,25 +66,26 @@ app.get('/info', (request, response) => {
             ${date}
         </div>`) 
 })
+
 app.get('/api/persons', (request, response) => {
     Person.find({}).then(persons => {
         response.json(persons)
     })
 })
-/*
-app.get('/api/persons', (request, response) => {
-    response.json(persons)
-})
-*/
-app.get('/api/persons/:id', (request, response) =>{
-    const id = Number(request.params.id)
-    const person = persons.find(person => person.id === id)
 
-    if(person) {
-        response.json(person)
-    } else {
-        response.status(404).end()
-    }
+app.get('/api/persons/:id', (request, response, next) => {
+    Person.findById(request.params.id)
+    .then(person => {
+        if(person) {
+            response.json(person)
+        } else {
+            console.log('404 tulee!')
+            response.status(404).end()
+        }
+    })
+    .catch(error =>
+        next(error)
+    )
 })
 
 app.delete('/api/persons/:id', (request, response) => {
@@ -114,47 +113,14 @@ app.post('/api/persons', (request, response) => {
         response.json(savedPerson)
     })
 })
-/*
-app.post('/api/persons', (request, response) => {
-    const body = request.body
-    if (!body.name) {
-        return response.status(400).json({
-            error: 'name missing'
-        })
-    }
-    if (!body.number) {
-        return response.status(400).json({
-            error: 'number missing'
-        })
-    }
 
-    const nameMatch = persons.find(person => person.name.toUpperCase() === body.name.toUpperCase())
-    if(nameMatch) {
-        console.log("löytyi", nameMatch)
-        return response.status(400).json({
-            error: 'name already in phonebook'
-        })
-    }
+const unknownEndpoint = (request, response) => {
+    response.status(404).send({ error: 'unknown endpoint' })
+  }
+  
+app.use(unknownEndpoint)
 
-    const numberMatch = persons.find(person => person.number === body.number)
-    if(numberMatch) {
-        console.log("numero löytyi", numberMatch)
-        return response.status(400).json({
-            error: 'number already in phonebook'
-        })
-    }
-
-    const person = {
-        name: body.name,
-        number: body.number,
-        id: generateId(),
-    }
-
-    persons = persons.concat(person)
-
-    response.json(person)
-})
-*/
+app.use(errorHandler)
 
 const PORT = process.env.PORT 
 app.listen(PORT, () => {
