@@ -39,7 +39,7 @@ const errorHandler = (error, request, response, next) => {
     } 
     if(error.name === 'ValidationError') {
         console.log('validointivirhe!')
-        return response.status(400).send({error: 'name already in phonebook'})
+        return response.status(400).send({error: 'input validation error'})
     }
 
     next(error)
