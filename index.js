@@ -31,7 +31,7 @@ app.use(morgan(':method :url :status :res[content-length] :response-time ms :bod
 
 const errorHandler = (error, request, response, next) => {
     console.log('nyt errorHandlerissa!')
-    console.error(error.message)
+    console.error(error)
     
     if(error.name === 'CastError') {
         console.log('castError!')
@@ -39,7 +39,7 @@ const errorHandler = (error, request, response, next) => {
     } 
     if(error.name === 'ValidationError') {
         console.log('validointivirhe!')
-        return response.status(400).send({error: 'input validation error'})
+        return response.status(400).send({error: error.message})
     }
 
     next(error)
